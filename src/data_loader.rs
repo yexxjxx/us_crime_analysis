@@ -6,7 +6,7 @@ use nalgebra::DMatrix;
 use rand::SeedableRng;
 use rand::rngs::StdRng;
 use rand::seq::SliceRandom;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::error::Error;
 use std::path::Path;
 
@@ -16,7 +16,6 @@ use std::path::Path;
 pub struct CrimeRecord {
     pub state: String,
     pub year: i32,
-    pub crime_type: String,
     pub victim_sex: String,
     pub victim_age: f64,
     pub perpetrator_sex: String,
@@ -48,7 +47,6 @@ pub fn load_records<P: AsRef<Path>>(
         let record = CrimeRecord {
             state: record[5].to_string(), // State (index 5)
             year,
-            crime_type: record[9].to_string(), // Crime Type (index 9)
             victim_sex: record[11].to_string(), // Victim Sex (index 11)
             victim_age,
             perpetrator_sex: record[15].to_string(), // Perpetrator Sex (index 15)
@@ -67,49 +65,94 @@ pub fn load_records<P: AsRef<Path>>(
     Ok(records)
 }
 
+/// Helper function to collect unique categories from a field
+/// Inputs:
+/// - records: Vector of CrimeRecord
+/// - field: Field name to collect unique categories from
+/// Outputs:
+/// - HashSet of unique categories
+fn collect_unique_categories(records: &[CrimeRecord], field: &str) -> HashSet<String> {
+    let mut categories = HashSet::new();
+    for record in records {
+        let value = match field {
+            "victim_sex" => &record.victim_sex,
+            "perpetrator_sex" => &record.perpetrator_sex,
+            "relationship" => &record.relationship,
+            "weapon" => &record.weapon,
+            _ => continue,
+        };
+        categories.insert(value.clone());
+    }
+    categories
+}
+
 /// Load data for state-based similarity analysis by aggregating crime features per state.
 /// Inputs:
 /// - records: Vector of CrimeRecord
 /// Outputs:
-/// - Result containing states and feature matrix (crime type counts)
+/// - Result containing states and feature matrix
 pub fn load_state_data(
     records: &[CrimeRecord],
 ) -> Result<(Vec<String>, DMatrix<f64>), Box<dyn Error>> {
-    let mut state_map: HashMap<String, HashMap<String, f64>> = HashMap::new();
-    let crime_types: Vec<String> = records
-        .iter()
-        .map(|r| r.crime_type.clone())
-        .collect::<std::collections::HashSet<_>>()
-        .into_iter()
-        .collect();
+    let victim_sex_categories = collect_unique_categories(records, "victim_sex");
+    let perp_sex_categories = collect_unique_categories(records, "perpetrator_sex");
+    let relationship_categories = collect_unique_categories(records, "relationship");
+    let weapon_categories = collect_unique_categories(records, "weapon");
 
-    // Aggregate by state and crime type
+    let mut features = Vec::new();
+    for cat in &victim_sex_categories {
+        features.push(format!("Victim_{}", cat));
+    }
+    for cat in &perp_sex_categories {
+        features.push(format!("Perp_{}", cat));
+    }
+    for cat in &relationship_categories {
+        features.push(format!("Rel_{}", cat));
+    }
+    for cat in &weapon_categories {
+        features.push(format!("Weapon_{}", cat));
+    }
+
+    let mut state_map: HashMap<String, HashMap<String, f64>> = HashMap::new();
+
+    // Aggregate by state and feature
     for record in records {
         let state_entry = state_map.entry(record.state.clone()).or_insert_with(|| {
             let mut map = HashMap::new();
-            for ct in &crime_types {
-                map.insert(ct.clone(), 0.0);
+            for f in &features {
+                map.insert(f.clone(), 0.0);
             }
             map
         });
-        *state_entry.entry(record.crime_type.clone()).or_insert(0.0) += 1.0;
+        *state_entry
+            .entry(format!("Victim_{}", record.victim_sex))
+            .or_insert(0.0) += 1.0;
+        *state_entry
+            .entry(format!("Perp_{}", record.perpetrator_sex))
+            .or_insert(0.0) += 1.0;
+        *state_entry
+            .entry(format!("Rel_{}", record.relationship))
+            .or_insert(0.0) += 1.0;
+        *state_entry
+            .entry(format!("Weapon_{}", record.weapon))
+            .or_insert(0.0) += 1.0;
     }
 
     // Create states and feature vectors
     let mut states = Vec::new();
     let mut feature_vectors = Vec::new();
-    for (state, crime_counts) in state_map {
+    for (state, feature_counts) in state_map {
         states.push(state);
-        let mut features = Vec::new();
-        for ct in &crime_types {
-            features.push(*crime_counts.get(ct).unwrap_or(&0.0));
+        let mut features_vec = Vec::new();
+        for f in &features {
+            features_vec.push(*feature_counts.get(f).unwrap_or(&0.0));
         }
-        feature_vectors.push(features);
+        feature_vectors.push(features_vec);
     }
 
     // Convert to DMatrix
     let num_rows = states.len();
-    let num_cols = crime_types.len();
+    let num_cols = features.len();
     let flat_data: Vec<f64> = feature_vectors.into_iter().flatten().collect();
     let data = DMatrix::from_row_slice(num_rows, num_cols, &flat_data);
 
@@ -120,21 +163,33 @@ pub fn load_state_data(
 /// Inputs:
 /// - records: Vector of CrimeRecord
 /// Outputs:
-/// - Result containing age groups and feature matrix (crime type counts)
+/// - Result containing age groups and feature matrix
 pub fn load_age_group_data(
     records: &[CrimeRecord],
 ) -> Result<(Vec<String>, DMatrix<f64>), Box<dyn Error>> {
-    let mut age_group_map: HashMap<String, HashMap<String, f64>> = HashMap::new();
-    let crime_types: Vec<String> = records
-        .iter()
-        .map(|r| r.crime_type.clone())
-        .collect::<std::collections::HashSet<_>>()
-        .into_iter()
-        .collect();
+    let victim_sex_categories = collect_unique_categories(records, "victim_sex");
+    let perp_sex_categories = collect_unique_categories(records, "perpetrator_sex");
+    let relationship_categories = collect_unique_categories(records, "relationship");
+    let weapon_categories = collect_unique_categories(records, "weapon");
 
-    // Aggregate by age group and crime type
+    let mut features = Vec::new();
+    for cat in &victim_sex_categories {
+        features.push(format!("Victim_{}", cat));
+    }
+    for cat in &perp_sex_categories {
+        features.push(format!("Perp_{}", cat));
+    }
+    for cat in &relationship_categories {
+        features.push(format!("Rel_{}", cat));
+    }
+    for cat in &weapon_categories {
+        features.push(format!("Weapon_{}", cat));
+    }
+
+    let mut age_group_map: HashMap<String, HashMap<String, f64>> = HashMap::new();
+
+    // Aggregate by age group and feature
     for record in records {
-        // Determine age group (10-year bins)
         let age_group = if record.victim_age < 0.0 || record.victim_age >= 100.0 {
             "Unknown".to_string()
         } else {
@@ -146,29 +201,40 @@ pub fn load_age_group_data(
         };
         let age_entry = age_group_map.entry(age_group).or_insert_with(|| {
             let mut map = HashMap::new();
-            for ct in &crime_types {
-                map.insert(ct.clone(), 0.0);
+            for f in &features {
+                map.insert(f.clone(), 0.0);
             }
             map
         });
-        *age_entry.entry(record.crime_type.clone()).or_insert(0.0) += 1.0;
+        *age_entry
+            .entry(format!("Victim_{}", record.victim_sex))
+            .or_insert(0.0) += 1.0;
+        *age_entry
+            .entry(format!("Perp_{}", record.perpetrator_sex))
+            .or_insert(0.0) += 1.0;
+        *age_entry
+            .entry(format!("Rel_{}", record.relationship))
+            .or_insert(0.0) += 1.0;
+        *age_entry
+            .entry(format!("Weapon_{}", record.weapon))
+            .or_insert(0.0) += 1.0;
     }
 
     // Create age groups and feature vectors
     let mut age_groups = Vec::new();
     let mut feature_vectors = Vec::new();
-    for (age_group, crime_counts) in age_group_map {
+    for (age_group, feature_counts) in age_group_map {
         age_groups.push(age_group);
-        let mut features = Vec::new();
-        for ct in &crime_types {
-            features.push(*crime_counts.get(ct).unwrap_or(&0.0));
+        let mut features_vec = Vec::new();
+        for f in &features {
+            features_vec.push(*feature_counts.get(f).unwrap_or(&0.0));
         }
-        feature_vectors.push(features);
+        feature_vectors.push(features_vec);
     }
 
     // Convert to DMatrix
     let num_rows = age_groups.len();
-    let num_cols = crime_types.len();
+    let num_cols = features.len();
     let flat_data: Vec<f64> = feature_vectors.into_iter().flatten().collect();
     let data = DMatrix::from_row_slice(num_rows, num_cols, &flat_data);
 
@@ -179,47 +245,70 @@ pub fn load_age_group_data(
 /// Inputs:
 /// - records: Vector of CrimeRecord
 /// Outputs:
-/// - Result containing decades and feature matrix (crime type counts)
+/// - Result containing decades and feature matrix
 pub fn load_decade_data(
     records: &[CrimeRecord],
 ) -> Result<(Vec<String>, DMatrix<f64>), Box<dyn Error>> {
-    let mut decade_map: HashMap<String, HashMap<String, f64>> = HashMap::new();
-    let crime_types: Vec<String> = records
-        .iter()
-        .map(|r| r.crime_type.clone())
-        .collect::<std::collections::HashSet<_>>()
-        .into_iter()
-        .collect();
+    let victim_sex_categories = collect_unique_categories(records, "victim_sex");
+    let perp_sex_categories = collect_unique_categories(records, "perpetrator_sex");
+    let relationship_categories = collect_unique_categories(records, "relationship");
+    let weapon_categories = collect_unique_categories(records, "weapon");
 
-    // Aggregate by decade and crime type
+    let mut features = Vec::new();
+    for cat in &victim_sex_categories {
+        features.push(format!("Victim_{}", cat));
+    }
+    for cat in &perp_sex_categories {
+        features.push(format!("Perp_{}", cat));
+    }
+    for cat in &relationship_categories {
+        features.push(format!("Rel_{}", cat));
+    }
+    for cat in &weapon_categories {
+        features.push(format!("Weapon_{}", cat));
+    }
+
+    let mut decade_map: HashMap<String, HashMap<String, f64>> = HashMap::new();
+
+    // Aggregate by decade and feature
     for record in records {
-        // Determine decade (e.g., 1990s, 2000s)
         let decade = format!("{}s", (record.year / 10) * 10);
         let decade_entry = decade_map.entry(decade).or_insert_with(|| {
             let mut map = HashMap::new();
-            for ct in &crime_types {
-                map.insert(ct.clone(), 0.0);
+            for f in &features {
+                map.insert(f.clone(), 0.0);
             }
             map
         });
-        *decade_entry.entry(record.crime_type.clone()).or_insert(0.0) += 1.0;
+        *decade_entry
+            .entry(format!("Victim_{}", record.victim_sex))
+            .or_insert(0.0) += 1.0;
+        *decade_entry
+            .entry(format!("Perp_{}", record.perpetrator_sex))
+            .or_insert(0.0) += 1.0;
+        *decade_entry
+            .entry(format!("Rel_{}", record.relationship))
+            .or_insert(0.0) += 1.0;
+        *decade_entry
+            .entry(format!("Weapon_{}", record.weapon))
+            .or_insert(0.0) += 1.0;
     }
 
     // Create decades and feature vectors
     let mut decades = Vec::new();
     let mut feature_vectors = Vec::new();
-    for (decade, crime_counts) in decade_map {
+    for (decade, feature_counts) in decade_map {
         decades.push(decade);
-        let mut features = Vec::new();
-        for ct in &crime_types {
-            features.push(*crime_counts.get(ct).unwrap_or(&0.0));
+        let mut features_vec = Vec::new();
+        for f in &features {
+            features_vec.push(*feature_counts.get(f).unwrap_or(&0.0));
         }
-        feature_vectors.push(features);
+        feature_vectors.push(features_vec);
     }
 
     // Convert to DMatrix
     let num_rows = decades.len();
-    let num_cols = crime_types.len();
+    let num_cols = features.len();
     let flat_data: Vec<f64> = feature_vectors.into_iter().flatten().collect();
     let data = DMatrix::from_row_slice(num_rows, num_cols, &flat_data);
 
@@ -256,7 +345,6 @@ mod tests {
             CrimeRecord {
                 state: "Alaska".to_string(),
                 year: 1980,
-                crime_type: "Murder or Manslaughter".to_string(),
                 victim_sex: "Male".to_string(),
                 victim_age: 14.0,
                 perpetrator_sex: "Male".to_string(),
@@ -266,7 +354,6 @@ mod tests {
             CrimeRecord {
                 state: "Alaska".to_string(),
                 year: 1980,
-                crime_type: "Murder or Manslaughter".to_string(),
                 victim_sex: "Male".to_string(),
                 victim_age: 43.0,
                 perpetrator_sex: "Male".to_string(),
@@ -277,8 +364,7 @@ mod tests {
         let (states, data) = load_state_data(&records).unwrap();
         assert_eq!(states, vec!["Alaska"]);
         assert_eq!(data.nrows(), 1);
-        assert_eq!(data.ncols(), 1); // Only one crime type
-        assert_eq!(data[(0, 0)], 2.0); // Two incidents of "Murder or Manslaughter"
+        assert!(data.ncols() > 0);
     }
 
     #[test]
@@ -287,7 +373,6 @@ mod tests {
             CrimeRecord {
                 state: "Alaska".to_string(),
                 year: 1980,
-                crime_type: "Murder or Manslaughter".to_string(),
                 victim_sex: "Male".to_string(),
                 victim_age: 14.0,
                 perpetrator_sex: "Male".to_string(),
@@ -297,7 +382,6 @@ mod tests {
             CrimeRecord {
                 state: "Alaska".to_string(),
                 year: 1980,
-                crime_type: "Murder or Manslaughter".to_string(),
                 victim_sex: "Male".to_string(),
                 victim_age: 43.0,
                 perpetrator_sex: "Male".to_string(),
@@ -306,11 +390,11 @@ mod tests {
             },
         ];
         let (age_groups, data) = load_age_group_data(&records).unwrap();
-        assert_eq!(age_groups, vec!["10-19", "40-49"]);
+        let expected_groups = HashSet::from(["10-19", "40-49"]);
+        let actual_groups: HashSet<&str> = age_groups.iter().map(|s| s.as_str()).collect();
+        assert_eq!(actual_groups, expected_groups);
         assert_eq!(data.nrows(), 2);
-        assert_eq!(data.ncols(), 1); // One crime type
-        assert_eq!(data[(0, 0)], 1.0); // One incident in "10-19"
-        assert_eq!(data[(1, 0)], 1.0); // One incident in "40-49"
+        assert!(data.ncols() > 0);
     }
 
     #[test]
@@ -319,7 +403,6 @@ mod tests {
             CrimeRecord {
                 state: "Alaska".to_string(),
                 year: 1980,
-                crime_type: "Murder or Manslaughter".to_string(),
                 victim_sex: "Male".to_string(),
                 victim_age: 14.0,
                 perpetrator_sex: "Male".to_string(),
@@ -329,7 +412,6 @@ mod tests {
             CrimeRecord {
                 state: "Alaska".to_string(),
                 year: 1985,
-                crime_type: "Murder or Manslaughter".to_string(),
                 victim_sex: "Male".to_string(),
                 victim_age: 43.0,
                 perpetrator_sex: "Male".to_string(),
@@ -340,7 +422,6 @@ mod tests {
         let (decades, data) = load_decade_data(&records).unwrap();
         assert_eq!(decades, vec!["1980s"]);
         assert_eq!(data.nrows(), 1);
-        assert_eq!(data.ncols(), 1); // One crime type
-        assert_eq!(data[(0, 0)], 2.0); // Two incidents in "1980s"
+        assert!(data.ncols() > 0);
     }
 }

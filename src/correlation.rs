@@ -207,7 +207,6 @@ mod tests {
             CrimeRecord {
                 state: "New Mexico".to_string(),
                 year: 1988,
-                crime_type: "Manslaughter by Negligence".to_string(),
                 victim_sex: "Male".to_string(),
                 victim_age: 26.0,
                 perpetrator_sex: "Unknown".to_string(),
@@ -217,7 +216,6 @@ mod tests {
             CrimeRecord {
                 state: "Nevada".to_string(),
                 year: 1988,
-                crime_type: "Murder or Manslaughter".to_string(),
                 victim_sex: "Female".to_string(),
                 victim_age: 29.0,
                 perpetrator_sex: "Male".to_string(),
@@ -237,7 +235,6 @@ mod tests {
             CrimeRecord {
                 state: "New Mexico".to_string(),
                 year: 1988,
-                crime_type: "Manslaughter by Negligence".to_string(),
                 victim_sex: "Male".to_string(),
                 victim_age: 26.0,
                 perpetrator_sex: "Unknown".to_string(),
@@ -247,7 +244,6 @@ mod tests {
             CrimeRecord {
                 state: "Nevada".to_string(),
                 year: 1988,
-                crime_type: "Murder or Manslaughter".to_string(),
                 victim_sex: "Female".to_string(),
                 victim_age: 29.0,
                 perpetrator_sex: "Male".to_string(),
@@ -267,7 +263,6 @@ mod tests {
             CrimeRecord {
                 state: "New Mexico".to_string(),
                 year: 1988,
-                crime_type: "Manslaughter by Negligence".to_string(),
                 victim_sex: "Male".to_string(),
                 victim_age: 26.0,
                 perpetrator_sex: "Unknown".to_string(),
@@ -277,7 +272,6 @@ mod tests {
             CrimeRecord {
                 state: "Nevada".to_string(),
                 year: 1988,
-                crime_type: "Murder or Manslaughter".to_string(),
                 victim_sex: "Female".to_string(),
                 victim_age: 29.0,
                 perpetrator_sex: "Male".to_string(),
@@ -297,7 +291,6 @@ mod tests {
             CrimeRecord {
                 state: "New Mexico".to_string(),
                 year: 1988,
-                crime_type: "Manslaughter by Negligence".to_string(),
                 victim_sex: "Male".to_string(),
                 victim_age: 26.0,
                 perpetrator_sex: "Unknown".to_string(),
@@ -307,7 +300,6 @@ mod tests {
             CrimeRecord {
                 state: "Nevada".to_string(),
                 year: 1988,
-                crime_type: "Murder or Manslaughter".to_string(),
                 victim_sex: "Female".to_string(),
                 victim_age: 29.0,
                 perpetrator_sex: "Male".to_string(),
@@ -325,7 +317,6 @@ mod tests {
             CrimeRecord {
                 state: "New Mexico".to_string(),
                 year: 1988,
-                crime_type: "Manslaughter by Negligence".to_string(),
                 victim_sex: "Male".to_string(),
                 victim_age: 26.0,
                 perpetrator_sex: "Unknown".to_string(),
@@ -335,7 +326,6 @@ mod tests {
             CrimeRecord {
                 state: "Nevada".to_string(),
                 year: 1988,
-                crime_type: "Murder or Manslaughter".to_string(),
                 victim_sex: "Female".to_string(),
                 victim_age: 29.0,
                 perpetrator_sex: "Male".to_string(),
@@ -353,7 +343,6 @@ mod tests {
             CrimeRecord {
                 state: "New Mexico".to_string(),
                 year: 1988,
-                crime_type: "Manslaughter by Negligence".to_string(),
                 victim_sex: "Male".to_string(),
                 victim_age: 26.0,
                 perpetrator_sex: "Unknown".to_string(),
@@ -363,7 +352,6 @@ mod tests {
             CrimeRecord {
                 state: "Nevada".to_string(),
                 year: 1988,
-                crime_type: "Murder or Manslaughter".to_string(),
                 victim_sex: "Female".to_string(),
                 victim_age: 29.0,
                 perpetrator_sex: "Male".to_string(),
