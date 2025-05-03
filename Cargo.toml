@@ -1,0 +1,11 @@
+[package]
+name = "us_crime_analysis"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+statrs = "0.18"
+nalgebra = "0.33"
+petgraph = "0.8"
+rand = "0.9"
+csv = "1.3"
