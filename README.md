@@ -31,7 +31,7 @@ The dataset contains crime records from 1980 onwards, enabling a comprehensive e
   - Bins victim ages into 10-year age groups (e.g., 10-19, 20-29).
   - Extracts decades from crime years (e.g., 1990s, 2000s).
 - **Feature Extraction**:
-  - Aggregates crime type counts per state, age group, and decade for similarity and clustering analyses.
+  - Aggregates crime feature counts per state, age group, and decade for similarity and clustering analyses.
 
 ## C. Code Structure
 
@@ -81,17 +81,18 @@ cargo test
 running 19 tests
 test analysis::tests::test_compute_degree_centrality ... ok
 test analysis::tests::test_detect_communities ... ok
+test correlation::tests::test_analyze_relationship_weapon ... ok
 test correlation::tests::test_analyze_age_group_correlations ... ok
 test correlation::tests::test_analyze_decade_correlations ... ok
-test correlation::tests::test_analyze_victim_perpetrator_relationship ... ok
-test correlation::tests::test_analyze_relationship_weapon ... ok
 test correlation::tests::test_analyze_victim_perpetrator_sex ... ok
 test correlation::tests::test_analyze_state_correlations ... ok
 test analysis::tests::test_compute_closeness_centrality ... ok
-test data_loader::tests::test_load_age_group_data ... ok
+test correlation::tests::test_chi_square_test ... ok
+test correlation::tests::test_analyze_victim_perpetrator_relationship ... ok
 test data_loader::tests::test_load_decade_data ... ok
-test data_loader::tests::test_load_state_data ... ok
+test data_loader::tests::test_load_age_group_data ... ok
 test graph_utils::tests::test_create_similarity_graph ... ok
+test data_loader::tests::test_load_state_data ... ok
 test kmeans::tests::test_kmeans_fit ... ok
 test kmeans::tests::test_kmeans_new ... ok
 test similarity::tests::test_compute_cosine_similarity ... ok
@@ -128,47 +129,47 @@ State vs Relationship Correlation (Chi-Square p-value): 0.000000
 State vs Weapon Correlation (Chi-Square p-value): 0.000000
 
 Top 5 states by degree centrality:
-Alaska: 0.9796
-Georgia: 0.9796
-New York: 0.9796
-Iowa: 0.9796
-Alabama: 0.9796
+Texas: 0.4694
+Indiana: 0.4082
+Pennsylvania: 0.3673
+Virginia: 0.3673
+Georgia: 0.3673
 
 Top 5 states by closeness centrality:
-Florida: 1.0205
-Louisiana: 1.0205
-New York: 1.0205
-California: 1.0205
-North Carolina: 1.0205
+Texas: 1.2174
+Indiana: 1.1269
+Pennsylvania: 1.0784
+Georgia: 1.0533
+Virginia: 1.0528
 
-Number of communities detected in the state graph: 2
+Number of communities detected in the state graph: 19
 
 Clusters of states based on crime features:
-Cluster 2: ["Missouri", "Virginia", "New Jersey", "Maryland", "Ohio", "Tennessee", "South Carolina", "North Carolina", "Indiana", "Georgia", "Louisiana", "Arizona", "Pennsylvania"]
-Cluster 4: ["Rhodes Island", "Kansas", "Montana", "Oregon", "South Dakota", "Utah", "West Virginia", "Wyoming", "North Dakota", "New Hampshire", "Nebraska", "Vermont", "Minnesota", "Delaware", "Iowa", "Hawaii", "Alaska", "Idaho"]
-Cluster 1: ["Texas", "California"]
-Cluster 3: ["Michigan", "New York", "Illinois", "Florida"]
-Cluster 0: ["Kentucky", "Nevada", "New Mexico", "District of Columbia", "Massachusetts", "Colorado", "Washington", "Wisconsin", "Mississippi", "Arkansas", "Oklahoma", "Connecticut", "Alabama"]
+Cluster 2: ["Washington", "Wisconsin", "Oklahoma", "Nevada", "Mississippi", "Kentucky", "Massachusetts", "New Mexico", "District of Columbia", "Connecticut", "Arkansas", "Alabama", "Colorado"]
+Cluster 0: ["Michigan", "New York", "Pennsylvania", "Maryland", "Florida", "Illinois"]
+Cluster 4: ["South Dakota", "Vermont", "Rhodes Island", "Nebraska", "Kansas", "Hawaii", "Delaware", "Oregon", "Iowa", "Minnesota", "West Virginia", "Idaho", "Utah", "Alaska", "Wyoming", "Montana", "New Hampshire", "North Dakota"]
+Cluster 3: ["Texas", "California"]
+Cluster 1: ["Indiana", "Virginia", "Ohio", "Missouri", "Louisiana", "Georgia", "North Carolina", "South Carolina", "Arizona", "Tennessee", "New Jersey"]
 
-Cluster 2 - State vs Victim Sex Correlation: 0.096996
-Cluster 2 - State vs Relationship Correlation: 0.923930
-Cluster 2 - State vs Weapon Correlation: 0.003699
+Cluster 2 - State vs Victim Sex Correlation: 0.159423
+Cluster 2 - State vs Relationship Correlation: 0.430229
+Cluster 2 - State vs Weapon Correlation: 0.933552
+
+Cluster 0 - State vs Victim Sex Correlation: 0.252911
+Cluster 0 - State vs Relationship Correlation: 0.366534
+Cluster 0 - State vs Weapon Correlation: 0.000015
 
 Cluster 4 - State vs Victim Sex Correlation: 0.762773
 Cluster 4 - State vs Relationship Correlation: 0.999999
 Cluster 4 - State vs Weapon Correlation: 0.409502
 
-Cluster 1 - State vs Victim Sex Correlation: 0.265652
-Cluster 1 - State vs Relationship Correlation: 0.007296
-Cluster 1 - State vs Weapon Correlation: 0.270169
+Cluster 3 - State vs Victim Sex Correlation: 0.265652
+Cluster 3 - State vs Relationship Correlation: 0.007296
+Cluster 3 - State vs Weapon Correlation: 0.270169
 
-Cluster 3 - State vs Victim Sex Correlation: 0.178691
-Cluster 3 - State vs Relationship Correlation: 0.167988
-Cluster 3 - State vs Weapon Correlation: 0.000087
-
-Cluster 0 - State vs Victim Sex Correlation: 0.159423
-Cluster 0 - State vs Relationship Correlation: 0.430229
-Cluster 0 - State vs Weapon Correlation: 0.933552
+Cluster 1 - State vs Victim Sex Correlation: 0.186391
+Cluster 1 - State vs Relationship Correlation: 0.995057
+Cluster 1 - State vs Weapon Correlation: 0.078590
 ```
 
 #### Age Group-based Analysis
@@ -180,47 +181,47 @@ Age Group vs Relationship Correlation (Chi-Square p-value): 0.000000
 Age Group vs Weapon Correlation (Chi-Square p-value): 0.000000
 
 Top 5 age groups by degree centrality:
-80-89: 1.0000
-30-39: 1.0000
-0-9: 1.0000
-40-49: 1.0000
-60-69: 1.0000
+50-59: 0.5000
+40-49: 0.5000
+30-39: 0.5000
+20-29: 0.4000
+10-19: 0.4000
 
 Top 5 age groups by closeness centrality:
-20-29: 0.9996
-50-59: 0.9996
-30-39: 0.9996
-60-69: 0.9995
-40-49: 0.9995
+50-59: 0.9746
+40-49: 0.9746
+30-39: 0.9744
+60-69: 0.9693
+10-19: 0.7522
 
-Number of communities detected in the age group graph: 1
+Number of communities detected in the age group graph: 4
 
 Clusters of age groups based on crime features:
-Cluster 3: ["50-59"]
-Cluster 1: ["20-29"]
-Cluster 4: ["Unknown", "70-79", "90-99", "80-89"]
-Cluster 2: ["30-39", "40-49", "10-19"]
-Cluster 0: ["60-69", "0-9"]
+Cluster 4: ["70-79", "80-89", "90-99"]
+Cluster 3: ["10-19", "40-49"]
+Cluster 1: ["30-39", "20-29"]
+Cluster 2: ["50-59", "0-9", "60-69"]
+Cluster 0: ["Unknown"]
 
-Cluster 3 - Age Group vs Victim Sex Correlation: 1.000000
-Cluster 3 - Age Group vs Relationship Correlation: 1.000000
-Cluster 3 - Age Group vs Weapon Correlation: 1.000000
+Cluster 4 - Age Group vs Victim Sex Correlation: 0.006973
+Cluster 4 - Age Group vs Relationship Correlation: 0.932227
+Cluster 4 - Age Group vs Weapon Correlation: 0.138060
 
-Cluster 1 - Age Group vs Victim Sex Correlation: 1.000000
-Cluster 1 - Age Group vs Relationship Correlation: 1.000000
-Cluster 1 - Age Group vs Weapon Correlation: 1.000000
+Cluster 3 - Age Group vs Victim Sex Correlation: 0.453087
+Cluster 3 - Age Group vs Relationship Correlation: 0.028993
+Cluster 3 - Age Group vs Weapon Correlation: 0.155837
 
-Cluster 4 - Age Group vs Victim Sex Correlation: 0.000000
-Cluster 4 - Age Group vs Relationship Correlation: 0.992786
-Cluster 4 - Age Group vs Weapon Correlation: 0.406399
+Cluster 1 - Age Group vs Victim Sex Correlation: 0.020792
+Cluster 1 - Age Group vs Relationship Correlation: 0.866854
+Cluster 1 - Age Group vs Weapon Correlation: 0.267829
 
-Cluster 2 - Age Group vs Victim Sex Correlation: 0.619696
-Cluster 2 - Age Group vs Relationship Correlation: 0.113444
-Cluster 2 - Age Group vs Weapon Correlation: 0.046482
+Cluster 2 - Age Group vs Victim Sex Correlation: 0.000202
+Cluster 2 - Age Group vs Relationship Correlation: 0.000000
+Cluster 2 - Age Group vs Weapon Correlation: 0.000000
 
-Cluster 0 - Age Group vs Victim Sex Correlation: 0.005784
-Cluster 0 - Age Group vs Relationship Correlation: 0.000006
-Cluster 0 - Age Group vs Weapon Correlation: 0.015649
+Cluster 0 - Age Group vs Victim Sex Correlation: 1.000000
+Cluster 0 - Age Group vs Relationship Correlation: 1.000000
+Cluster 0 - Age Group vs Weapon Correlation: 1.000000
 ```
 
 #### Decade-based Analysis
@@ -232,35 +233,30 @@ Decade vs Relationship Correlation (Chi-Square p-value): 0.053295
 Decade vs State Correlation (Chi-Square p-value): 0.021006
 
 Top 5 decades by degree centrality:
-1990s: 1.0000
-2010s: 1.0000
 2000s: 1.0000
 1980s: 1.0000
+2010s: 1.0000
+1990s: 1.0000
 
 Top 5 decades by closeness centrality:
-1990s: 1.0000
-1980s: 1.0000
-2000s: 0.9999
-2010s: 0.9999
+1990s: 0.9922
+2000s: 0.9920
+2010s: 0.9869
+1980s: 0.9851
 
 Number of communities detected in the decade graph: 1
 
 Clusters of decades based on crime features:
-Cluster 2: ["2010s"]
-Cluster 0: ["1980s", "1990s"]
-Cluster 3: ["2000s"]
+Cluster 0: ["1980s", "1990s", "2000s"]
+Cluster 1: ["2010s"]
 
-Cluster 2 - Decade vs Victim Sex Correlation: 1.000000
-Cluster 2 - Decade vs Relationship Correlation: 1.000000
-Cluster 2 - Decade vs State Correlation: 1.000000
+Cluster 0 - Decade vs Victim Sex Correlation: 0.452213
+Cluster 0 - Decade vs Relationship Correlation: 0.049657
+Cluster 0 - Decade vs State Correlation: 0.134337
 
-Cluster 0 - Decade vs Victim Sex Correlation: 0.154735
-Cluster 0 - Decade vs Relationship Correlation: 0.353007
-Cluster 0 - Decade vs State Correlation: 0.628805
-
-Cluster 3 - Decade vs Victim Sex Correlation: 1.000000
-Cluster 3 - Decade vs Relationship Correlation: 1.000000
-Cluster 3 - Decade vs State Correlation: 1.000000
+Cluster 1 - Decade vs Victim Sex Correlation: 1.000000
+Cluster 1 - Decade vs Relationship Correlation: 1.000000
+Cluster 1 - Decade vs State Correlation: 1.000000
 ```
 
 #### Victim-Perpetrator and Relationship-Weapon Analyses
@@ -332,7 +328,7 @@ us_crime_analysis/
 ```toml
 [package]
 name = "us_crime_analysis"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 
 [dependencies]
